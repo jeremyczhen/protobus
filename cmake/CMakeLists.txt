@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(fdbus-pb C CXX)
+project(protobus C CXX)
 
 option(fdbus_BUILD_JAVA "Build JAVA" OFF)
 

@@ -61,6 +61,13 @@ public:
                    << request->minute() << ", "
                    << request->second() << std::endl;
     }
+     void CallNextSong(::google::protobuf::RpcController* controller,
+                      const ::FDBPB_EXAMPLE::SongId* request,
+                      ::google::protobuf::Empty* response,
+                      ::google::protobuf::Closure* done) {
+         std::cout << "CallNextSong is called, "
+                   << request->id() << std::endl;
+     }
 };
 
 #endif

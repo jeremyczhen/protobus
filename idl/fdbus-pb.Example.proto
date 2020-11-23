@@ -54,4 +54,5 @@ service MediaPlayerService {
   rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime);
   rpc CallSearchMetaData(google.protobuf.Empty) returns (ElapseTime);
   rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty);
+  rpc CallNextSong(SongId) returns (google.protobuf.Empty);
 }
