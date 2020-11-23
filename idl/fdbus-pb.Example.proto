@@ -1,0 +1,57 @@
+syntax = "proto2";
+option java_outer_classname = "FdbPbExample";
+option java_package = "fdbus.pb.example";
+option cc_generic_services = true;
+
+package FDBPB_EXAMPLE;
+import "google/protobuf/empty.proto";
+
+enum FdbMediaSvcMsgId
+{
+    REQ_METADATA               = 0;
+    REQ_RAWDATA                = 1;
+    REQ_CREATE_MEDIAPLAYER     = 2;
+    NTF_ELAPSE_TIME            = 3;
+    NTF_MEDIAPLAYER_CREATED    = 4;
+    NTF_MANUAL_UPDATE          = 5;
+}
+
+message FdbMsgObjectInfo
+{
+    required uint32 obj_id = 1; 
+    optional string obj_name = 2; 
+}
+
+message FdbMsgObjectInfoTbl
+{
+    repeated FdbMsgObjectInfo info = 1;
+}
+
+
+message SongId
+{
+    required int32 id = 1; 
+}
+
+message NowPlayingDetails 
+{
+    required string artist = 1;
+    required string album = 2;
+    required string genre = 3;
+    required string title = 4;
+    optional string file_name = 5;
+    optional string folder_name = 6;
+    required int32 elapse_time = 7;
+}
+message ElapseTime
+{
+    required int32 hour = 1;
+    required int32 minute = 2;
+    required int32 second = 3;
+}
+
+service MediaPlayerService {
+  rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime);
+  rpc CallSearchMetaData(google.protobuf.Empty) returns (ElapseTime);
+  rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty);
+}
