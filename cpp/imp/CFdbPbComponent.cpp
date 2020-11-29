@@ -29,6 +29,10 @@ using namespace std::placeholders;
 void CFdbPbComponent::processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj,
                                         google::protobuf::Service *pb_service)
 {
+    if (!pb_service)
+    {
+        return;
+    }
     auto msg = castToMessage<CFdbMessage *>(msg_ref);
     auto descriptor = pb_service->GetDescriptor();
     auto method = descriptor->method(msg->code());
@@ -55,11 +59,20 @@ void CFdbPbComponent::processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *
 
     //TODO: pass message reference through controller
     pb_service->CallMethod(method, 0, request, response, 0);
-    if (response && msg->needReply(msg_ref))
+    if ( msg->needReply(msg_ref))
     {
-        CFdbProtoMsgBuilder builder(*response);
-        msg->reply(msg_ref, builder);
+        if (response)
+        {
+            CFdbProtoMsgBuilder builder(*response);
+            msg->reply(msg_ref, builder);
+        }
+        else
+        {
+            CFdbMessage::statusf(msg_ref, NFdbBase::FDB_ST_AUTO_REPLY_OK, "Automatically reply to %s.",
+                                method->full_name().c_str());
+        }
     }
+
     if (request)
     {
         delete request;
@@ -177,35 +190,38 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
                                                               const char *start_with,
                                                               const tRpcTbl *tbl)
 {
-    if (!pb_service || !bus_name)
+    if (!bus_name)
     {
         return 0;
     }
 
     uint32_t start_size = start_with ? (uint32_t)strlen(start_with) : 0;
     CFdbMsgDispatcher::CMsgHandleTbl msg_tbl;
-    auto descriptor = pb_service->GetDescriptor();
-    for (int i = 0; i < descriptor->method_count(); ++i)
+    if (pb_service)
     {
-        auto method = descriptor->method(i);
-        if (tbl)
+        auto descriptor = pb_service->GetDescriptor();
+        for (int i = 0; i < descriptor->method_count(); ++i)
         {
-            if (tbl->find(method->name()) == tbl->end())
+            auto method = descriptor->method(i);
+            if (tbl)
             {
-                continue;
+                if (tbl->find(method->name()) == tbl->end())
+                {
+                    continue;
+                }
             }
-        }
-        else if (start_with && start_size)
-        {
-            if (method->name().compare(0, start_size, start_with))
+            else if (start_with && start_size)
             {
-                continue;
+                if (method->name().compare(0, start_size, start_with))
+                {
+                    continue;
+                }
             }
-        }
 
-        tDispatcherCallbackFn callback = std::bind(&CFdbPbComponent::processMethodCall,
-                                                   this, _1, _2, pb_service);
-        addMsgHandle(msg_tbl, i, callback);
+            tDispatcherCallbackFn callback = std::bind(&CFdbPbComponent::processMethodCall,
+                                                       this, _1, _2, pb_service);
+            addMsgHandle(msg_tbl, i, callback);
+        }
     }
     auto server = offerService(bus_name, msg_tbl, connect_callback);
     if (server)
