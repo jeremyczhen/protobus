@@ -21,6 +21,7 @@
 #include <common_base/fdb_log_trace.h>
 #include <common_base/CBaseEndpoint.h>
 #include <protobus/CFdbPbComponent.h>
+#include <protobus/CFdbRpcController.h>
 
 static void fdb_decode_status(CFdbMessage *msg, google::protobuf::RpcController *controller)
 {
@@ -71,8 +72,43 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                                google::protobuf::Closure *done)
 {
     FdbMsgCode_t code = method->index();
+    CFdbRpcController *fdb_ctrl = 0;
+    if (controller)
+    {
+        fdb_ctrl = fdb_dynamic_cast_if_available<CFdbRpcController *>(controller);
+    }
     if (mEndpoint->role() == FDB_OBJECT_ROLE_CLIENT)
     {
+        if (fdb_ctrl && fdb_ctrl->isPublish())
+        {
+            if (request)
+            {
+                CFdbProtoMsgBuilder builder(*request);
+                mEndpoint->publish(code,
+                                   builder,
+                                   fdb_ctrl->topic().c_str(),
+                                   fdb_ctrl->forceUpdate(),
+                                   fdb_ctrl->qos());
+            }
+            else
+            {
+                mEndpoint->publish(code,
+                                   (const void *)0,
+                                   0,
+                                   fdb_ctrl->topic().c_str(),
+                                   fdb_ctrl->forceUpdate(),
+                                   fdb_ctrl->qos());
+            }
+            return;
+        }
+        int32_t timeout = 0;
+        EFdbQOS qos = FDB_QOS_RELIABLE;
+        if (fdb_ctrl)
+        {
+            timeout = fdb_ctrl->timeout();
+            qos = fdb_ctrl->qos();
+        }
+
         if (done)
         {   //async call
             if (request)
@@ -82,7 +118,8 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                     [done, response, controller](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
                     {
                         fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, controller);
-                    });
+                    },
+                    timeout);
             }
             else
             {
@@ -90,7 +127,8 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                 [done, response, controller](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
                 {
                     fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, controller);
-                });
+                },
+                (const void *)0, 0, timeout);
             }
         }
         else
@@ -102,11 +140,11 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                 if (request)
                 {
                     CFdbProtoMsgBuilder builder(*request);
-                    mEndpoint->invoke(ref, builder);
+                    mEndpoint->invoke(ref, builder, timeout);
                 }
                 else
                 {
-                    mEndpoint->invoke(ref);
+                    mEndpoint->invoke(ref, 0, 0, timeout);
                 }
                 if (msg->isStatus())
                 {
@@ -120,25 +158,33 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                 if (request)
                 {
                     CFdbProtoMsgBuilder builder(*request);
-                    mEndpoint->send(code, builder);
+                    mEndpoint->send(code, builder, qos);
                 }
                 else
                 {
-                    mEndpoint->send(code);
+                    mEndpoint->send(code, (const void *)0, 0, qos);
                 }
             }
         }
     }
     else
     {
+        const char *topic = 0;
+        EFdbQOS qos = FDB_QOS_RELIABLE;
+        if (fdb_ctrl)
+        {
+            topic = fdb_ctrl->topic().c_str();
+            qos = fdb_ctrl->qos();
+        }
+
         if (request)
         {
             CFdbProtoMsgBuilder builder(*request);
-            mEndpoint->broadcast(code, builder);
+            mEndpoint->broadcast(code, builder, topic, qos);
         }
         else
         {
-            mEndpoint->broadcast(code);
+            mEndpoint->broadcast(code, (const void *)0, 0, topic, qos);
         }
     }
 }
