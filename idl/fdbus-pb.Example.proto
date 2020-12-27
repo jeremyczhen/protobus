@@ -2,6 +2,8 @@ syntax = "proto2";
 option java_outer_classname = "FdbPbExample";
 option java_package = "fdbus.pb.example";
 option cc_generic_services = true;
+option java_generic_services = true;
+option py_generic_services = true;
 
 package FDBPB_EXAMPLE;
 import "google/protobuf/empty.proto";
