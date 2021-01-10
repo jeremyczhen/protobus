@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.3)
 project(protobus C CXX)
 
-option(fdbus_BUILD_JAVA "Build JAVA" OFF)
+option(protobus_BUILD_JAVA "Build JAVA" OFF)
 
 if (MSVC)
     add_definitions("-D__WIN32__")
@@ -52,10 +52,10 @@ endif()
 
 include(cpp.cmake)
 
-if (fdbus_BUILD_JAVA)
+if (protobus_BUILD_JAVA)
     include(java.cmake)
 endif()
 
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
-print_variable(fdbus_BUILD_JAVA)
+print_variable(protobus_BUILD_JAVA)

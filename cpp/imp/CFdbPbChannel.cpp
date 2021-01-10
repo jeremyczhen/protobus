@@ -72,10 +72,10 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                                google::protobuf::Closure *done)
 {
     FdbMsgCode_t code = method->index();
-    CFdbRpcController *fdb_ctrl = 0;
+    CFdbCltController *fdb_ctrl = 0;
     if (controller)
     {
-        fdb_ctrl = fdb_dynamic_cast_if_available<CFdbRpcController *>(controller);
+        fdb_ctrl = fdb_dynamic_cast_if_available<CFdbCltController *>(controller);
     }
     if (mEndpoint->role() == FDB_OBJECT_ROLE_CLIENT)
     {

@@ -19,6 +19,8 @@
 
 #include FDB_IDL_EXAMPLE_H
 #include <iostream>
+#include <protobus/CFdbRpcController.h>
+#include <common_base/CFdbMessage.h>
 
 class CMyMediaPlayerService : public FDBPB_EXAMPLE::MediaPlayerService
 {
@@ -37,9 +39,11 @@ public:
                   << request->genre() << ", "
                   << request->title() << ", "
                   << request->file_name() << std::endl;
-        response->set_hour(5);
-        response->set_minute(23);
-        response->set_second(26);
+        ::FDBPB_EXAMPLE::ElapseTime resp;
+        resp.set_hour(5);
+        resp.set_minute(23);
+        resp.set_second(26);
+        PROTOBUS_REPLY(controller, resp);
     }
     void CallSearchMetaData(::google::protobuf::RpcController* controller,
                          const ::google::protobuf::Empty* request,
@@ -47,9 +51,11 @@ public:
                          ::google::protobuf::Closure* done)
     {
          std::cout << "CallSearchMetaData is called" << std::endl;
-         response->set_hour(6);
-         response->set_minute(42);
-         response->set_second(35);
+         ::FDBPB_EXAMPLE::ElapseTime resp;
+         resp.set_hour(6);
+         resp.set_minute(42);
+         resp.set_second(35);
+         PROTOBUS_REPLY(controller, resp);
     }
     void EmitElapseTime(::google::protobuf::RpcController* controller,
                          const ::FDBPB_EXAMPLE::ElapseTime* request,

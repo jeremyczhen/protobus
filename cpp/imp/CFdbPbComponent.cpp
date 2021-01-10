@@ -22,6 +22,7 @@
 #include <common_base/CBaseServer.h>
 #define FDB_LOG_TAG "FDB_PB"
 #include <common_base/fdb_log_trace.h>
+#include <protobus/CFdbRpcController.h>
 #include "CFdbPbChannel.h"
 
 using namespace std::placeholders;
@@ -54,23 +55,13 @@ void CFdbPbComponent::processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *
         }
     }
 
-    auto response = isEmptyMessage(pb_service->GetResponsePrototype(method)) ?
-                    0 : pb_service->GetResponsePrototype(method).New();
-
-    //TODO: pass message reference through controller
-    pb_service->CallMethod(method, 0, request, response, 0);
-    if ( msg->needReply(msg_ref))
+    google::protobuf::Message *response = 0; // actually response is not needed.
+    CFdbSvcController controller(msg, msg_ref);
+    pb_service->CallMethod(method, &controller, request, response, 0);
+    if (response && msg->needReply(msg_ref))
     {
-        if (response)
-        {
-            CFdbProtoMsgBuilder builder(*response);
-            msg->reply(msg_ref, builder);
-        }
-        else
-        {
-            CFdbMessage::statusf(msg_ref, NFdbBase::FDB_ST_AUTO_REPLY_OK, "Automatically reply to %s.",
-                                method->full_name().c_str());
-        }
+        CFdbProtoMsgBuilder builder(*response);
+        msg->reply(msg_ref, builder);
     }
 
     if (request)

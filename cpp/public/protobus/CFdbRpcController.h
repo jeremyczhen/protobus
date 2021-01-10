@@ -19,6 +19,14 @@
 
 #include <google/protobuf/service.h>
 #include <common_base/common_defs.h>
+#include <common_base/CFdbProtoMsgBuilder.h>
+
+#define PROTOBUS_REPLY(_controller, _response) do { \
+    CFdbProtoMsgBuilder builder(_response); \
+    ((CFdbSvcController *)_controller)->getMsg()->reply(((CFdbSvcController *)_controller)->getMsgRef(), builder); \
+} while (0)
+
+class CFdbMessage;
 
 namespace google
 {
@@ -28,10 +36,10 @@ namespace google
     }
 }
 
-class CFdbRpcController : public google::protobuf::RpcController
+class CFdbCltController : public google::protobuf::RpcController
 {
 public:
-    CFdbRpcController()
+    CFdbCltController()
         : mIsPublish(false)
         , mTimeout(0)
         , mFailed(false)
@@ -113,7 +121,47 @@ private:
     std::string mReason;
     EFdbQOS mQOS;
     bool mForceUpdate;
-    
+};
+
+class CFdbSvcController : public google::protobuf::RpcController
+{
+public:
+    CFdbSvcController(CFdbMessage *msg, CBaseJob::Ptr &msg_ref)
+        : mMsg(msg)
+        , mMsgRef(msg_ref)
+    {}
+    CFdbMessage *getMsg() const
+    {
+        return mMsg;
+    }
+    CBaseJob::Ptr &getMsgRef() const
+    {
+        return mMsgRef;
+    }
+    void Reset()
+    {}
+    std::string ErrorText() const
+    {
+        return "";
+    }
+    void StartCancel()
+    {}
+    void SetFailed(const std::string& reason)
+    {
+    }
+    bool IsCanceled() const
+    {
+        return false;
+    }
+    void NotifyOnCancel(google::protobuf::Closure* callback)
+    {}
+    bool Failed() const
+    {
+        return false;
+    }
+private:
+    CFdbMessage *mMsg;
+    CBaseJob::Ptr &mMsgRef;
 };
 
 #endif
