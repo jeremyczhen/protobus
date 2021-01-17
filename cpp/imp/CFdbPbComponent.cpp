@@ -77,7 +77,7 @@ void CFdbPbComponent::processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *
 google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_name,
                                                               google::protobuf::Service *pb_service,
                                                               CFdbBaseObject::tConnCallbackFn &connect_callback,
-                                                              const char *start_with,
+                                                              const char *prefix,
                                                               const tRpcTbl *tbl)
 {
     if (!bus_name)
@@ -88,7 +88,7 @@ google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_na
     CFdbEventDispatcher::CEvtHandleTbl evt_tbl;
     if (pb_service)
     {
-        uint32_t start_size = start_with ? (uint32_t)strlen(start_with) : 0;
+        uint32_t start_size = prefix ? (uint32_t)strlen(prefix) : 0;
         auto descriptor = pb_service->GetDescriptor();
         const char *topic = 0;
         for (int i = 0; i < descriptor->method_count(); ++i)
@@ -103,9 +103,9 @@ google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_na
                 }
                 topic = it->second.c_str();
             }
-            else if (start_with && start_size)
+            else if (prefix && start_size)
             {
-                if (method->name().compare(0, start_size, start_with))
+                if (method->name().compare(0, start_size, prefix))
                 {
                     continue;
                 }
@@ -148,9 +148,9 @@ google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_na
 google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_name,
                                                               google::protobuf::Service *pb_service,
                                                               CFdbBaseObject::tConnCallbackFn connect_callback,
-                                                            const char *start_with)
+                                                            const char *prefix)
 {
-    return queryPbService(bus_name, pb_service, connect_callback, start_with, 0);
+    return queryPbService(bus_name, pb_service, connect_callback, prefix, 0);
 }
 
 google::protobuf::RpcChannel *CFdbPbComponent::getClientChannel(const char *bus_name)
@@ -178,7 +178,7 @@ google::protobuf::RpcChannel *CFdbPbComponent::getServerChannel(const char *bus_
 google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_name,
                                                               google::protobuf::Service *pb_service,
                                                               CFdbBaseObject::tConnCallbackFn &connect_callback,
-                                                              const char *start_with,
+                                                              const char *prefix,
                                                               const tRpcTbl *tbl)
 {
     if (!bus_name)
@@ -186,7 +186,7 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
         return 0;
     }
 
-    uint32_t start_size = start_with ? (uint32_t)strlen(start_with) : 0;
+    uint32_t start_size = prefix ? (uint32_t)strlen(prefix) : 0;
     CFdbMsgDispatcher::CMsgHandleTbl msg_tbl;
     if (pb_service)
     {
@@ -201,9 +201,9 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
                     continue;
                 }
             }
-            else if (start_with && start_size)
+            else if (prefix && start_size)
             {
-                if (method->name().compare(0, start_size, start_with))
+                if (method->name().compare(0, start_size, prefix))
                 {
                     continue;
                 }
@@ -245,9 +245,9 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
 google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_name,
                                                               google::protobuf::Service *pb_service,
                                                               CFdbBaseObject::tConnCallbackFn connect_callback,
-                                                              const char *start_with)
+                                                              const char *prefix)
 {
-  return offerPbService(bus_name, pb_service, connect_callback, start_with, 0);
+  return offerPbService(bus_name, pb_service, connect_callback, prefix, 0);
 }
 
  void CFdbPbComponent::addMethod(tRpcTbl &tbl, const char *method_name)

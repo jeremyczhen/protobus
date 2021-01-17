@@ -75,7 +75,7 @@ public:
                                                  CFdbBaseObject::tConnCallbackFn connect_callback = 0,
                                                  const tRpcTbl *tbl = 0);
     // the same as above but no event table is given; instead a prefix string
-    // is provided to select the methods starting with 'start_with' as event
+    // is provided to select the methods starting with 'prefix' as event
     // handles. For example, for the following service:
     // service MediaPlayerService {
     //      rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime);
@@ -83,7 +83,7 @@ public:
     //      rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty);
     //      rpc CallNextSong(SongId) returns (google.protobuf.Empty);
     //  }
-    // if 'start_with' is "Emit", the method 'EmitElapseTime' will be registered
+    // if 'prefix' is "Emit", the method 'EmitElapseTime' will be registered
     // as event handle.
     //
     // The method return with an rpc channel which will be given to
@@ -91,7 +91,7 @@ public:
     google::protobuf::RpcChannel *queryPbService(const char *bus_name,
                                                  google::protobuf::Service *pb_service,
                                                  CFdbBaseObject::tConnCallbackFn connect_callback,
-                                                 const char *start_with);
+                                                 const char *prefix);
     // The method is called at server side to register method handles and obtain
     // the rpc channel for event broadcast.
     //
@@ -106,7 +106,7 @@ public:
                                                  CFdbBaseObject::tConnCallbackFn connect_callback = 0,
                                                  const tRpcTbl *tbl = 0);
     // the same as above but no method table is given; instead a prefix string
-    // is provided to select the methods starting with 'start_with' as method
+    // is provided to select the methods starting with 'prefix' as method
     // handles. For example, for the following service:
     // service MediaPlayerService {
     //      rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime);
@@ -114,7 +114,7 @@ public:
     //      rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty);
     //      rpc CallNextSong(SongId) returns (google.protobuf.Empty);
     //  }
-    // if 'start_with' is "Call", the method 'CallNowPlayingInfo',
+    // if 'prefix' is "Call", the method 'CallNowPlayingInfo',
     // 'CallSearchMetaData' and 'CallNextSong' will be registered
     // as method handle.
     //
@@ -123,7 +123,7 @@ public:
     google::protobuf::RpcChannel *offerPbService(const char *bus_name,
                                                  google::protobuf::Service *pb_service,
                                                  CFdbBaseObject::tConnCallbackFn connect_callback,
-                                                 const char *start_with);
+                                                 const char *prefix);
     // Obtain the rpc channel at client side to call method upon the server
     google::protobuf::RpcChannel *getClientChannel(const char *bus_name);
     // Obtain the rpc channel at server side to broadcast events to clients
@@ -143,12 +143,12 @@ private:
     google::protobuf::RpcChannel *queryPbService(const char *bus_name,
                                                  google::protobuf::Service *pb_service,
                                                  CFdbBaseObject::tConnCallbackFn &connect_callback,
-                                                 const char *start_with,
+                                                 const char *prefix,
                                                  const tRpcTbl *tbl);
     google::protobuf::RpcChannel *offerPbService(const char *bus_name,
                                                  google::protobuf::Service *pb_service,
                                                  CFdbBaseObject::tConnCallbackFn &connect_callback,
-                                                 const char *start_with,
+                                                 const char *prefix,
                                                  const tRpcTbl *tbl);
 };
 
