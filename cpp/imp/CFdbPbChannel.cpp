@@ -115,18 +115,18 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
             {
                 CFdbProtoMsgBuilder builder(*request);
                 mComponent->invoke(mEndpoint, code, builder,
-                    [done, response, controller](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
+                    [done, response](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
                     {
-                        fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, controller);
+                        fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, 0);
                     },
                     timeout);
             }
             else
             {
                 mComponent->invoke(mEndpoint, code,
-                [done, response, controller](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
+                [done, response](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
                 {
-                    fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, controller);
+                    fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, 0);
                 },
                 (const void *)0, 0, timeout);
             }

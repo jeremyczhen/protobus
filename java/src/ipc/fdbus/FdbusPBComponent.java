@@ -94,24 +94,18 @@ public class FdbusPBComponent
                         } catch (Exception e) {
                             System.out.println(e);
                         }
-                        service.callMethod(method, new FdbusPBController.Server(msg), request, null);
+                        try {
+                            service.callMethod(method, new FdbusPBController.Server(msg), request, null);
+                        } catch (Exception e) {
+                            System.out.println(e);
+                        }
                     }
                 }));
         }
         return event_handle_table;
     }
-    private FdbusPBChannel getChannel(String bus_name, Object endpoint, boolean is_server)
+    private FdbusPBChannel getChannel(String bus_name, Object endpoint, HashMap<String, FdbusPBChannel> channel_table)
     {
-        HashMap<String, FdbusPBChannel> channel_table;
-        if (is_server)
-        {
-            channel_table = mServerChannels;
-        }
-        else
-        {
-            channel_table = mClientChannels;
-        }
-
         if (channel_table.containsKey(bus_name))
         {
             return channel_table.get(bus_name);
@@ -131,7 +125,7 @@ public class FdbusPBComponent
     {
         ArrayList<SubscribeItem> event_handle_table = getHandleTable(service, prefix, event_table);
         FdbusClient client = mAFComponent.queryService(bus_name, event_handle_table, conn_callback);
-        return getChannel(bus_name, client, false);
+        return getChannel(bus_name, client, mClientChannels);
     }
     public FdbusPBChannel queryService(String bus_name,
                                        Service service,
@@ -165,7 +159,7 @@ public class FdbusPBComponent
         
         ArrayList<SubscribeItem> message_handle_table = getHandleTable(service, prefix, table);
         FdbusServer server = mAFComponent.offerService(bus_name, message_handle_table, conn_callback);
-        return getChannel(bus_name, server, true);
+        return getChannel(bus_name, server, mServerChannels);
     }
     public FdbusPBChannel offerService(String bus_name,
                                        Service service,

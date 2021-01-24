@@ -32,7 +32,7 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
     {
         mEndpoint = endpoint;
     }
-    private Message handleResponse(RpcController controller, FdbusMessage msg, Message responsePrototype)
+    private Message createResponseMsg(RpcController controller, FdbusMessage msg, Message responsePrototype)
     {
         Message response = null;
         if ((msg == null) || (msg.returnValue() != Fdbus.FDB_ST_OK))
@@ -96,7 +96,11 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
                         {
                             public void handleMessage(FdbusMessage msg)
                             {
-                                done.run(handleResponse(controller, msg, responsePrototype));
+                                try {
+                                    done.run(createResponseMsg(controller, msg, responsePrototype));
+                                } catch (Exception e) {
+                                    System.out.println(e);
+                                }
                             }
                         },
                         timeout);
@@ -109,7 +113,11 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
                         {
                             public void handleMessage(FdbusMessage msg)
                             {
-                                done.run(handleResponse(controller, msg, responsePrototype));
+                                try {
+                                    done.run(createResponseMsg(controller, msg, responsePrototype));
+                                } catch (Exception e) {
+                                    System.out.println(e);
+                                }
                             }
                         },
                         timeout);
@@ -117,15 +125,12 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
             }
             else
             {   // send by client
-                System.out.println("jeremy 1");
                 if (request == null)
                 {
-                    System.out.println("jeremy 2");
                     client.send(code, null);
                 }
                 else
                 {
-                    System.out.println("jeremy 3");
                     FdbusProtoBuilder builder = new FdbusProtoBuilder(request);
                     client.send(code, builder);
                 }
@@ -191,7 +196,7 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
             ret_msg = client.invokeSync(code, builder, timeout);
         }
 
-        return handleResponse(controller, ret_msg, responsePrototype);
+        return createResponseMsg(controller, ret_msg, responsePrototype);
     }
 
     private Object mEndpoint;
