@@ -1,0 +1,50 @@
+//=====================================================================================
+//                   makefile to build fdbus in aosp source tree                      |
+//=====================================================================================
+
+//=====================================================================================
+//                              build libprotobus.so                                  |
+//=====================================================================================
+cc_library_shared {
+    name: "libprotobus",
+
+    cppflags: [
+        "-frtti",
+        "-fexceptions",
+        "-Wno-unused-parameter",
+        "-D__LINUX__",
+        "-DCONFIG_DEBUG_LOG",
+        "-DFDB_CFG_KEEP_ENV_TYPE",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D__LINUX__",
+        "-DCONFIG_DEBUG_LOG",
+    ],
+    srcs: [
+        "cpp/imp/CFdbPbChannel.cpp",
+        "cpp/imp/CFdbPbComponent.cpp",
+    ],
+
+    shared_libs: [
+        "libprotobuf-cpp-full",
+        "libcommon-base",
+    ],
+    export_include_dirs: ["cpp/public"],
+    local_include_dirs: [],
+
+}
+
+//=====================================================================================
+//                                build fdbus-jni.jar                                 |
+//=====================================================================================
+java_library {
+    sdk_version: "current",
+    name: "protobus",
+    srcs: ["java/src/ipc/fdbus/*.java"],
+    libs: [
+        "fdbus-jni",
+        "libprotobuf-java-full",
+    ],
+}
+
