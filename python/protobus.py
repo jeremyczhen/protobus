@@ -212,3 +212,24 @@ class FdbusPBComponent(object):
         self.server_channels[bus_name] = channel
         return channel
         
+    @classmethod
+    def printService(cls, pb_server):
+        svc_desc = pb_server.GetDescriptor()
+        print("Service %s\n    -Full Name: %s\n    -ID: %d\n    -Method Count: %d\n    -Interface Description: %s\n    -Method Table:\n"%(
+              svc_desc.name,
+              svc_desc.full_name,
+              svc_desc.index,
+              len(svc_desc.methods),
+              svc_desc.file.name))
+        print("    | %30s | %5s | %30s | %30s |\n"%(
+              "Method Name",
+              "ID",
+              "Input Name",
+              "Output Name"))
+        print("    ------------------------------------------------------------------------------------------------------------\n")
+        for m in svc_desc.methods:
+            print("    | %30s | %5d | %30s | %30s |\n"%(
+                  m.name,
+                  m.index,
+                  m.input_type.name,
+                  m.output_type.name))

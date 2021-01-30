@@ -67,6 +67,7 @@ channel_list = []
 nr_channels = len(sys.argv) - 1
 
 server = MyService()
+protobus.FdbusPBComponent.printService(server)
 
 for i in range(nr_channels):
     name = sys.argv[i+1]

@@ -137,6 +137,7 @@ int main(int argc, char **argv)
     FDB_CONTEXT->start();
     g_fdb_media_player_component.worker()->start();
     g_fdb_invoke_timer.attach(g_fdb_media_player_component.worker(), false);
+    CFdbPbComponent::printService(&g_fdb_pb_server);
 
     // import all methods starting with "Emit" and subscribe as event handle
     g_fdb_invoke_channel =  g_fdb_media_player_component.queryPbService(argv[1], &g_fdb_pb_server,

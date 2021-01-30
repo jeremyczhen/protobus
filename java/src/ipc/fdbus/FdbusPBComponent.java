@@ -175,4 +175,29 @@ public class FdbusPBComponent
     {
         return offerService(bus_name, service, conn_callback, null, message_table);
     }
+    public static void printService(Service service)
+    {
+        Descriptors.ServiceDescriptor svc_desc = service.getDescriptorForType();
+        System.out.printf("Service %s\n    -Full Name: %s\n    -ID: %d\n    -Method Count: %d\n    -Interface Description: %s\n    -Method Table:\n",
+                          svc_desc.getName(),
+                          svc_desc.getFullName(),
+                          svc_desc.getIndex(),
+                          svc_desc.getMethods().size(),
+                          svc_desc.getFile().getName());
+        System.out.printf("    | %30s | %5s | %30s | %30s |\n",
+                          "Method Name",
+                          "ID",
+                          "Input Name",
+                          "Output Name");
+        System.out.printf("    ------------------------------------------------------------------------------------------------------------\n");
+        List<Descriptors.MethodDescriptor> methods = svc_desc.getMethods();
+        for (Descriptors.MethodDescriptor method : methods)
+        {
+            System.out.printf("    | %30s | %5d | %30s | %30s |\n",
+                              method.getName(),
+                              method.getIndex(),
+                              method.getInputType().getName(),
+                              method.getOutputType().getName());
+        }
+    }
 }

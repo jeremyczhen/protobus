@@ -130,6 +130,7 @@ public:
     google::protobuf::RpcChannel *getServerChannel(const char *bus_name);
     // check if a message is google.protobuf.Empty
     static bool isEmptyMessage(const google::protobuf::Message &msg);
+    static void printService(google::protobuf::Service *pb_service);
 private:
     typedef std::map<std::string, CFdbPbChannel*> tChannelTbl;
 

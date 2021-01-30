@@ -72,6 +72,7 @@ int main(int argc, char **argv)
     FDB_CONTEXT->start();
     g_fdb_media_player_component.worker()->start();
     g_fdb_broadcast_timer.attach(g_fdb_media_player_component.worker(), false);
+    CFdbPbComponent::printService(&g_fdb_pb_server);
 
     // import all methods starting with "Call" as message handle
     g_fdb_broadcast_channel =  g_fdb_media_player_component.offerPbService(argv[1], &g_fdb_pb_server,

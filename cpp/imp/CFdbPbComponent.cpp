@@ -24,6 +24,7 @@
 #include <common_base/fdb_log_trace.h>
 #include <protobus/CFdbRpcController.h>
 #include "CFdbPbChannel.h"
+#include <stdio.h>
 
 using namespace std::placeholders;
 
@@ -188,9 +189,9 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
 
     uint32_t start_size = prefix ? (uint32_t)strlen(prefix) : 0;
     CFdbMsgDispatcher::CMsgHandleTbl msg_tbl;
+    auto descriptor = pb_service->GetDescriptor();
     if (pb_service)
     {
-        auto descriptor = pb_service->GetDescriptor();
         for (int i = 0; i < descriptor->method_count(); ++i)
         {
             auto method = descriptor->method(i);
@@ -269,3 +270,28 @@ bool CFdbPbComponent::isEmptyMessage(const google::protobuf::Message &msg)
     return !msg.GetDescriptor()->full_name().compare("google.protobuf.Empty");
 }
 
+void CFdbPbComponent::printService(google::protobuf::Service *pb_service)
+{
+    auto descriptor = pb_service->GetDescriptor();
+    printf("Service %s\n    -Full Name: %s\n    -ID: %d\n    -Method Count: %d\n    -Interface Description: %s\n    -Method Table:\n",
+           descriptor->name().c_str(),
+           descriptor->full_name().c_str(),
+           descriptor->index(),
+           descriptor->method_count(),
+           descriptor->file()->name().c_str());
+    printf("    | %30s | %5s | %30s | %30s |\n",
+           "Method Name",
+           "ID",
+           "Input Name",
+           "Output Name");
+    printf("    ------------------------------------------------------------------------------------------------------------\n");
+    for (int i = 0; i < descriptor->method_count(); ++i)
+    {
+        auto method = descriptor->method(i);
+        printf("    | %30s | %5d | %30s | %30s |\n",
+               method->name().c_str(),
+               method->index(),
+               method->input_type()->name().c_str(),
+               method->output_type()->name().c_str());
+    }
+}

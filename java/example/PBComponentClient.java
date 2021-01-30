@@ -184,7 +184,9 @@ public class PBComponentClient
 
         for (String arg : args)
         {
-            FdbusPBChannel channel = component.queryService(arg, comp_client.createEventHandle(),
+            EventHandle pb_server = comp_client.createEventHandle();
+            FdbusPBComponent.printService(pb_server);
+            FdbusPBChannel channel = component.queryService(arg, pb_server,
                 new FdbusAppListener.Connection()
                 {
                     public void onConnectionStatus(int sid, boolean is_online, boolean is_first)
