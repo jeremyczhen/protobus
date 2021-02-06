@@ -56,6 +56,8 @@ if (protobus_BUILD_JAVA)
     include(java.cmake)
 endif()
 
+install(FILES ${PACKAGE_SOURCE_ROOT}/python/protobus.py DESTINATION usr/share/fdbus)
+
 #set( CMAKE_VERBOSE_MAKEFILE on )
 
 print_variable(protobus_BUILD_JAVA)
