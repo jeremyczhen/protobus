@@ -22,6 +22,7 @@ import ipc.fdbus.FdbusClient;
 import ipc.fdbus.FdbusServer;
 import ipc.fdbus.FdbusMessage;
 import ipc.fdbus.FdbusPBController;
+import ipc.fdbus.protobus.Protobus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,17 +77,11 @@ public class FdbusPBComponent
                 }
             }
 
-            event_handle_table.add(SubscribeItem.newAction(method.getIndex(), topic,
+            event_handle_table.add(SubscribeItem.newAction(getMethodCode(method), topic,
                 new FdbusAppListener.Action(){
                     public void handleMessage(FdbusMessage msg)
                     {
                         Descriptors.ServiceDescriptor svc_desc = service.getDescriptorForType();
-                        List<Descriptors.MethodDescriptor> methods = svc_desc.getMethods();
-                        if (msg.code() >= methods.size())
-                        {
-                            return;
-                        }
-                        Descriptors.MethodDescriptor method = methods.get(msg.code());
                         Message request = null;
                         try {
                             request = service.getRequestPrototype(method).
@@ -195,9 +190,35 @@ public class FdbusPBComponent
         {
             System.out.printf("    | %30s | %5d | %30s | %30s |\n",
                               method.getName(),
-                              method.getIndex(),
+                              getMethodCode(method),
                               method.getInputType().getName(),
                               method.getOutputType().getName());
         }
+    }
+
+    public static int getMethodCode(Descriptors.MethodDescriptor method)
+    {
+        if (method.getOptions().hasExtension(ipc.fdbus.protobus.Protobus.code))
+        {
+            return method.getOptions().getExtension(ipc.fdbus.protobus.Protobus.code);
+        }
+        else
+        {
+            return method.getIndex();
+        }
+    }
+
+    public static int getMethodCode(Service service, String method_name)
+    {
+        Descriptors.ServiceDescriptor svc_desc = service.getDescriptorForType();
+        List<Descriptors.MethodDescriptor> methods = svc_desc.getMethods();
+        for (Descriptors.MethodDescriptor method : methods)
+        {
+            if (method.getName() == method_name)
+            {
+                return getMethodCode(method);
+            }
+        }
+        return -1;
     }
 }

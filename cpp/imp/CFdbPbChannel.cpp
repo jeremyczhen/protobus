@@ -71,7 +71,7 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                                google::protobuf::Message *response,
                                google::protobuf::Closure *done)
 {
-    FdbMsgCode_t code = method->index();
+    FdbMsgCode_t code = CFdbPbComponent::getMethodCode(method);
     CFdbCltController *fdb_ctrl = 0;
     if (controller)
     {

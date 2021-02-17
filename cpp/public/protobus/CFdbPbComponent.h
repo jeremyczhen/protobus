@@ -29,6 +29,8 @@ namespace google
         class Service;
         class RpcChannel;
         class Message;
+        class MethodDescriptor;
+        class ServiceDescriptor;
     }
 }
 
@@ -131,6 +133,8 @@ public:
     // check if a message is google.protobuf.Empty
     static bool isEmptyMessage(const google::protobuf::Message &msg);
     static void printService(google::protobuf::Service *pb_service);
+    static int32_t getMethodCode(const google::protobuf::MethodDescriptor *method);
+    static int32_t getMethodCode(google::protobuf::Service *pb_service, const char *method_name);
 private:
     typedef std::map<std::string, CFdbPbChannel*> tChannelTbl;
 
@@ -140,7 +144,9 @@ private:
     tChannelTbl mServerChannelTbl;
     std::mutex mServerChannelLock;
 
-    void processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj, google::protobuf::Service *pb_service);
+    void processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj,
+                           google::protobuf::Service *pb_service,
+                           const google::protobuf::MethodDescriptor *method);
     google::protobuf::RpcChannel *queryPbService(const char *bus_name,
                                                  google::protobuf::Service *pb_service,
                                                  CFdbBaseObject::tConnCallbackFn &connect_callback,

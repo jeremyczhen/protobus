@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(protobus C CXX)
+project(pb-example C CXX)
 
 option(protobus_BUILD_JAVA "Build JAVA" OFF)
 
@@ -23,10 +23,11 @@ else()
 endif()
 
 get_filename_component(PACKAGE_SOURCE_ROOT ${CMAKE_SOURCE_DIR} PATH)
+get_filename_component(PACKAGE_SOURCE_ROOT ${PACKAGE_SOURCE_ROOT} PATH)
 
 print_variable(PACKAGE_SOURCE_ROOT)
 
-set(IDL_GEN_ROOT ${CMAKE_INSTALL_PREFIX}/usr/include/protobus)
+set(IDL_GEN_ROOT ${CMAKE_CURRENT_BINARY_DIR})
 
 if (MSVC)
     foreach(flag_var
@@ -51,11 +52,32 @@ else()
 endif()
 
 include(idl-gen.cmake)
-include(cpp.cmake)
 
-if (protobus_BUILD_JAVA)
-    include(java.cmake)
+include_directories(
+    ${IDL_GEN_ROOT}
+    ${CMAKE_INSTALL_PREFIX}/usr/include/protobus/idl-gen
+    )
+
+add_definitions("-DFDB_IDL_EXAMPLE_H=<idl-gen/fdbus-pb.Example.pb.h>")
+
+add_executable(fdbpbclient
+    ${PACKAGE_SOURCE_ROOT}/cpp/example/fdbpbclient.cpp
+    ${IDL_GEN_ROOT}/idl-gen/fdbus-pb.Example.pb.cc
+)
+target_link_libraries(fdbpbclient fdbus-pb common_base)
+
+add_executable(fdbpbserver
+    ${PACKAGE_SOURCE_ROOT}/cpp/example/fdbpbserver.cpp
+    ${IDL_GEN_ROOT}/idl-gen/fdbus-pb.Example.pb.cc
+)
+target_link_libraries(fdbpbserver fdbus-pb common_base)
+if (MSVC)
+    target_link_libraries(fdbpbclient libprotobufd ws2_32.lib)
+    target_link_libraries(fdbpbserver libprotobufd ws2_32.lib)
+else()
+    target_link_libraries(fdbpbclient protobuf)
+    target_link_libraries(fdbpbserver protobuf)
 endif()
 
-install(FILES ${PACKAGE_SOURCE_ROOT}/python/protobus.py DESTINATION usr/share/fdbus)
-install(FILES ${PACKAGE_SOURCE_ROOT}/idl/protobus.proto DESTINATION usr/share/fdbus)
+install(TARGETS fdbpbclient fdbpbserver RUNTIME DESTINATION usr/bin)
+

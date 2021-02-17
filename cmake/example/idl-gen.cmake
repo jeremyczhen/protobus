@@ -1,5 +1,5 @@
 
-FILE(GLOB PROTO_SOURCES "${PACKAGE_SOURCE_ROOT}/idl/*.proto")
+FILE(GLOB PROTO_SOURCES "${PACKAGE_SOURCE_ROOT}/idl/example/*.proto")
 
 set(gen_tool "protoc")
 set(GEN_DIR ${IDL_GEN_ROOT}/idl-gen)
@@ -15,7 +15,7 @@ foreach(idl ${PROTO_SOURCES})
     set(gen_header ${GEN_DIR}/${base_name_we}.pb.h)
     set(gen_source ${GEN_DIR}/${base_name_we}.pb.cc)
     add_custom_command(OUTPUT ${gen_source} ${gen_header}
-        COMMAND ${gen_tool} -I${PACKAGE_SOURCE_ROOT}/idl -I${CMAKE_INSTALL_PREFIX}/include --cpp_out=${GEN_DIR} --python_out=${GEN_DIR} --java_out=${GEN_DIR} ${idl}
+        COMMAND ${gen_tool} -I${PACKAGE_SOURCE_ROOT}/idl/example -I${CMAKE_INSTALL_PREFIX}/include -I${CMAKE_INSTALL_PREFIX}/usr/share/fdbus --cpp_out=${GEN_DIR} --python_out=${GEN_DIR} --java_out=${GEN_DIR} ${idl}
         DEPENDS ${idl}
         WORKING_DIRECTORY ${PACKAGE_SOURCE_ROOT}/idl
     )

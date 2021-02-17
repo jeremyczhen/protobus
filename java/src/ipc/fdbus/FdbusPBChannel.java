@@ -64,7 +64,8 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
         {
             ctrl = (FdbusPBController.Client)controller;
         }
-        int code = method.getIndex();
+        int code = FdbusPBComponent.getMethodCode(method);
+
         if (mEndpoint instanceof FdbusClient)
         {
             FdbusClient client = (FdbusClient)mEndpoint;
@@ -184,7 +185,7 @@ public class FdbusPBChannel implements RpcChannel, BlockingRpcChannel
             timeout = ctrl.timeout();
         }
 
-        int code = method.getIndex();
+        int code = FdbusPBComponent.getMethodCode(method);
         FdbusMessage ret_msg;
         if (request == null)
         {

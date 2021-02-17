@@ -12,8 +12,9 @@ file(GLOB JAVA_SRC "${FDBUS_JAVA_SRC_DIR}/*.java")
 set(CMAKE_JAVA_INCLUDE_PATH ${FDBUS_JAVA_SRC_DIR})
 set(CMAKE_JAVA_COMPILE_FLAGS -Xlint:unchecked -Xlint:deprecation)
 
-add_jar(protobus-jar ${JAVA_SRC}
-        INCLUDE_JARS ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus/protobuf.jar ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus/fdbus-jni.jar
+add_jar(protobus-jar ${JAVA_SRC} ${CMAKE_INSTALL_PREFIX}/usr/include/protobus/idl-gen/ipc/fdbus/protobus/Protobus.java
+        INCLUDE_JARS ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus/protobuf.jar
+                     ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus/fdbus-jni.jar
         OUTPUT_DIR ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus
         OUTPUT_NAME protobus
         GENERATE_NATIVE_HEADERS protobus-native DESTINATION ${CMAKE_INSTALL_PREFIX}/usr/share/fdbus)

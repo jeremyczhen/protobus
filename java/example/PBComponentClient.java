@@ -112,7 +112,7 @@ public class PBComponentClient
                         {
                             if (reply == null)
                             {
-                                System.out.println("callNowPlayingInfo: something wrong!");
+                                System.out.println("async callNowPlayingInfo: something wrong!");
                                 return;
                             }
                             System.out.println("Async reply is received - Elapse time is received: " +
@@ -141,7 +141,7 @@ public class PBComponentClient
                 }
                 if (reply == null)
                 {
-                    System.out.println("callNowPlayingInfo: something wrong!");
+                    System.out.println("sync callNowPlayingInfo: something wrong!");
                     return;
                 }
                 System.out.println("Sync reply is received - Elapse time is received: " +

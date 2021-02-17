@@ -2,12 +2,13 @@
 //                   makefile to build fdbus in aosp source tree                      |
 //=====================================================================================
 
+FDB_PROTO_DIR = "idl"
+FDB_IDL_GEN_DIR = "vendor/bosch/protobus/" + FDB_PROTO_DIR
 //=====================================================================================
 //                              build libprotobus.so                                  |
 //=====================================================================================
 cc_library_shared {
     name: "libprotobus",
-
     cppflags: [
         "-frtti",
         "-fexceptions",
@@ -24,15 +25,17 @@ cc_library_shared {
     srcs: [
         "cpp/imp/CFdbPbChannel.cpp",
         "cpp/imp/CFdbPbComponent.cpp",
+        FDB_PROTO_DIR + "/protobus.proto",
     ],
+    proto: {
+        include_dirs: ["external/protobuf/src"],
+    },
 
     shared_libs: [
         "libprotobuf-cpp-full",
         "libcommon-base",
     ],
     export_include_dirs: ["cpp/public"],
-    local_include_dirs: [],
-
 }
 
 //=====================================================================================
@@ -41,7 +44,10 @@ cc_library_shared {
 java_library {
     sdk_version: "current",
     name: "protobus",
-    srcs: ["java/src/ipc/fdbus/*.java"],
+    srcs: [
+        "java/src/ipc/fdbus/*.java",
+        FDB_PROTO_DIR + "/protobus.proto",
+    ],
     libs: [
         "fdbus-jni",
         "libprotobuf-java-full",

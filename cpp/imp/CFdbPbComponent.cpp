@@ -17,32 +17,28 @@
 #include <protobus/CFdbPbComponent.h>
 #include <google/protobuf/service.h>
 #include <google/protobuf/descriptor.h>
+#include <google/protobuf/descriptor.pb.h>
 #include <common_base/CFdbProtoMsgBuilder.h>
 #include <common_base/CBaseClient.h>
 #include <common_base/CBaseServer.h>
 #define FDB_LOG_TAG "FDB_PB"
 #include <common_base/fdb_log_trace.h>
 #include <protobus/CFdbRpcController.h>
+#include <protobus/idl-gen/protobus.pb.h>
 #include "CFdbPbChannel.h"
 #include <stdio.h>
 
 using namespace std::placeholders;
 
 void CFdbPbComponent::processMethodCall(CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj,
-                                        google::protobuf::Service *pb_service)
+                                        google::protobuf::Service *pb_service,
+                                        const google::protobuf::MethodDescriptor *method)
 {
     if (!pb_service)
     {
         return;
     }
     auto msg = castToMessage<CFdbMessage *>(msg_ref);
-    auto descriptor = pb_service->GetDescriptor();
-    auto method = descriptor->method(msg->code());
-    if (!method)
-    {
-        return;
-    }
-
     auto request = isEmptyMessage(pb_service->GetRequestPrototype(method)) ?
                     0 : pb_service->GetRequestPrototype(method).New();
     if (request)
@@ -113,8 +109,8 @@ google::protobuf::RpcChannel *CFdbPbComponent::queryPbService(const char *bus_na
             }
 
             tDispatcherCallbackFn callback = std::bind(&CFdbPbComponent::processMethodCall,
-                                                       this, _1, _2, pb_service);
-            addEvtHandle(evt_tbl, i, callback, topic);
+                                                       this, _1, _2, pb_service, method);
+            addEvtHandle(evt_tbl, getMethodCode(method), callback, topic);
         }
     }
     
@@ -211,8 +207,8 @@ google::protobuf::RpcChannel *CFdbPbComponent::offerPbService(const char *bus_na
             }
 
             tDispatcherCallbackFn callback = std::bind(&CFdbPbComponent::processMethodCall,
-                                                       this, _1, _2, pb_service);
-            addMsgHandle(msg_tbl, i, callback);
+                                                       this, _1, _2, pb_service, method);
+            addMsgHandle(msg_tbl, getMethodCode(method), callback);
         }
     }
     auto server = offerService(bus_name, msg_tbl, connect_callback);
@@ -290,8 +286,33 @@ void CFdbPbComponent::printService(google::protobuf::Service *pb_service)
         auto method = descriptor->method(i);
         printf("    | %30s | %5d | %30s | %30s |\n",
                method->name().c_str(),
-               method->index(),
+               getMethodCode(method),
                method->input_type()->name().c_str(),
                method->output_type()->name().c_str());
     }
 }
+
+int32_t CFdbPbComponent::getMethodCode(const google::protobuf::MethodDescriptor *method)
+{
+    return method->options().HasExtension(ipc::fdbus::protobus::code) ?
+               method->options().GetExtension(ipc::fdbus::protobus::code) : method->index();
+}
+
+int32_t CFdbPbComponent::getMethodCode(google::protobuf::Service *pb_service, const char *method_name)
+{
+    if (!method_name)
+    {
+        return FDB_INVALID_ID;
+    }
+    auto descriptor = pb_service->GetDescriptor();
+    for (int i = 0; i < descriptor->method_count(); ++i)
+    {
+        auto method = descriptor->method(i);
+        if (!method->name().compare(method_name))
+        {
+            return getMethodCode(method);
+        }
+    }
+    return FDB_INVALID_ID;
+}
+

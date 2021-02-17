@@ -17,6 +17,7 @@
 """
 
 import fdbus
+import protobus_pb2
 from google.protobuf import service as _pb_service
 
 class FdbusRpcController(_pb_service.RpcController):
@@ -73,7 +74,7 @@ class FdbusRpcChannel(_pb_service.RpcChannel):
         self.endpoint = endpoint
 
     def CallMethod(self, method_descriptor, rpc_controller, request, response_class, done):
-        code = method_descriptor.index
+        code = FdbusPBComponent.getMethodCode(method_descriptor)
 
         req_msg = None
         if not request is None:
@@ -126,29 +127,21 @@ class FdbusPBComponent(object):
                 self.sid = sid
                 self.topic = topic;
                 self.reply_handle = reply_handle
-        def __init__(self, pb_server):
+        def __init__(self, pb_server, method):
             self.pb_server = pb_server
+            self.method = method
         def process(self, sid, code, data, topic, reply_handle):
-            svc_desc = self.pb_server.GetDescriptor()
-            method = None
-            for m in svc_desc.methods:
-                if m.index == code:
-                    method = m
-                    break
-            if method is None:
-                return
-
             if data is None:
                 request = None
             else:
-                request = self.pb_server.GetRequestClass(method)()
+                request = self.pb_server.GetRequestClass(self.method)()
                 try:
                     request.ParseFromString(data)
                 except Exception as e:
                     print('Except in process: ', e)
 
             try:
-                self.pb_server.CallMethod(method,
+                self.pb_server.CallMethod(self.method,
                                           FdbusPBComponent.PbClosure.Controller(sid, topic, reply_handle),
                                           request, None)
             except Exception as e:
@@ -183,8 +176,8 @@ class FdbusPBComponent(object):
             if method is None:
                 continue
 
-            ret_handle_table.append({'code': method.index, 'topic' : topic,
-                                     'callback' : FdbusPBComponent.PbClosure(pb_server)})
+            ret_handle_table.append({'code': self.getMethodCode(method), 'topic' : topic,
+                                     'callback' : FdbusPBComponent.PbClosure(pb_server, method)})
 
         return ret_handle_table
 
@@ -215,21 +208,37 @@ class FdbusPBComponent(object):
     @classmethod
     def printService(cls, pb_server):
         svc_desc = pb_server.GetDescriptor()
-        print("Service %s\n    -Full Name: %s\n    -ID: %d\n    -Method Count: %d\n    -Interface Description: %s\n    -Method Table:\n"%(
+        print("Service %s\n    -Full Name: %s\n    -ID: %d\n    -Method Count: %d\n    -Interface Description: %s\n    -Method Table:"%(
               svc_desc.name,
               svc_desc.full_name,
               svc_desc.index,
               len(svc_desc.methods),
               svc_desc.file.name))
-        print("    | %30s | %5s | %30s | %30s |\n"%(
+        print("    | %30s | %5s | %30s | %30s |"%(
               "Method Name",
               "ID",
               "Input Name",
               "Output Name"))
-        print("    ------------------------------------------------------------------------------------------------------------\n")
+        print("    ------------------------------------------------------------------------------------------------------------")
         for m in svc_desc.methods:
-            print("    | %30s | %5d | %30s | %30s |\n"%(
+            print("    | %30s | %5d | %30s | %30s |"%(
                   m.name,
-                  m.index,
+                  cls.getMethodCode(m),
                   m.input_type.name,
                   m.output_type.name))
+
+    @classmethod
+    def getMethodCode(cls, method):
+        if method.GetOptions().HasExtension(protobus_pb2.code):
+            return method.GetOptions().Extensions[protobus_pb2.code]
+        else:
+            return method.index
+
+    @classmethod
+    def getMethodCode(cls, pb_server, method_name):
+        svc_desc = pb_server.GetDescriptor()
+        for method in svc_desc.methods:
+            if method.name == method_name:
+                return cls.getMethodCode(method)
+        return -1;
+

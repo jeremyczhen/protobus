@@ -5,8 +5,10 @@ option cc_generic_services = true;
 option java_generic_services = true;
 option py_generic_services = true;
 
-package FDBPB_EXAMPLE;
 import "google/protobuf/empty.proto";
+import "protobus.proto";
+
+package FDBPB_EXAMPLE;
 
 enum FdbMediaSvcMsgId
 {
@@ -28,7 +30,6 @@ message FdbMsgObjectInfoTbl
 {
     repeated FdbMsgObjectInfo info = 1;
 }
-
 
 message SongId
 {
@@ -53,8 +54,16 @@ message ElapseTime
 }
 
 service MediaPlayerService {
-  rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime);
-  rpc CallSearchMetaData(google.protobuf.Empty) returns (ElapseTime);
-  rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty);
-  rpc CallNextSong(SongId) returns (google.protobuf.Empty);
+    rpc CallNowPlayingInfo(NowPlayingDetails) returns (ElapseTime) {
+        option (ipc.fdbus.protobus.code) = 100;
+    };
+    rpc CallSearchMetaData(google.protobuf.Empty) returns (ElapseTime) {
+        option (ipc.fdbus.protobus.code) = 200;
+    };
+    rpc EmitElapseTime(ElapseTime) returns (google.protobuf.Empty) {
+        option (ipc.fdbus.protobus.code) = 300;
+    };
+    rpc CallNextSong(SongId) returns (google.protobuf.Empty) {
+        option (ipc.fdbus.protobus.code) = 400;
+    };
 }

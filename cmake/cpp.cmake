@@ -1,5 +1,3 @@
-option(fdbus_BUILD_CPP_EXAMPLE "Build CPP example" ON)
-
 include_directories(
     ${PACKAGE_SOURCE_ROOT}/cpp
     ${PACKAGE_SOURCE_ROOT}/cpp/public
@@ -7,7 +5,10 @@ include_directories(
 
 file(GLOB IMP_SOURCES "${PACKAGE_SOURCE_ROOT}/cpp/imp/*.cpp")
 
-add_library(fdbus-pb ${LIB_BUILD_TYPE} ${IMP_SOURCES})
+add_library(fdbus-pb ${LIB_BUILD_TYPE}
+            ${IMP_SOURCES}
+           ${IDL_GEN_ROOT}/idl-gen/protobus.pb.cc
+    )
 target_link_libraries(fdbus-pb common_base)
 if (MSVC)
     target_link_libraries(fdbus-pb libprotobufd)
@@ -17,9 +18,3 @@ endif()
 
 install(TARGETS fdbus-pb DESTINATION usr/lib)
 install(DIRECTORY ${PACKAGE_SOURCE_ROOT}/cpp/public/protobus/ DESTINATION usr/include/protobus)
-
-if (fdbus_BUILD_CPP_EXAMPLE)
-    include(example.cmake)
-endif()
-
-print_variable(fdbus_BUILD_CPP_EXAMPLE)
