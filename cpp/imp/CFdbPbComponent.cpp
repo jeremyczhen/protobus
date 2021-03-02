@@ -24,7 +24,11 @@
 #define FDB_LOG_TAG "FDB_PB"
 #include <common_base/fdb_log_trace.h>
 #include <protobus/CFdbRpcController.h>
+#ifdef FDB_IDL_GEN_H
+#include FDB_IDL_GEN_H
+#else
 #include <protobus/idl-gen/protobus.pb.h>
+#endif
 #include "CFdbPbChannel.h"
 #include <stdio.h>
 

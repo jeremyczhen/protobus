@@ -4,6 +4,7 @@
 
 FDB_PROTO_DIR = "idl"
 FDB_IDL_GEN_DIR = "vendor/bosch/protobus/" + FDB_PROTO_DIR
+FDB_IDL_GEN_H = "<" + FDB_IDL_GEN_DIR + "/protobus.pb.h>"
 //=====================================================================================
 //                              build libprotobus.so                                  |
 //=====================================================================================
@@ -16,6 +17,7 @@ cc_library_shared {
         "-D__LINUX__",
         "-DCONFIG_DEBUG_LOG",
         "-DFDB_CFG_KEEP_ENV_TYPE",
+        "-DFDB_IDL_GEN_H=" + FDB_IDL_GEN_H,
     ],
     cflags: [
         "-Wno-unused-parameter",
@@ -30,7 +32,6 @@ cc_library_shared {
     proto: {
         include_dirs: ["external/protobuf/src"],
     },
-
     shared_libs: [
         "libprotobuf-cpp-full",
         "libcommon-base",
