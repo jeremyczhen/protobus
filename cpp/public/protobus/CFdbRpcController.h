@@ -21,20 +21,7 @@
 #include <common_base/common_defs.h>
 #include <common_base/CFdbProtoMsgBuilder.h>
 
-#define PROTOBUS_REPLY(_controller, _response) do { \
-    CFdbProtoMsgBuilder builder(_response); \
-    ((CFdbSvcController *)_controller)->getMsg()->reply(((CFdbSvcController *)_controller)->getMsgRef(), builder); \
-} while (0)
-
 class CFdbMessage;
-
-namespace google
-{
-    namespace protobuf
-    {
-        class Closure;
-    }
-}
 
 class CFdbCltController : public google::protobuf::RpcController
 {
@@ -158,6 +145,12 @@ public:
     bool Failed() const
     {
         return false;
+    }
+    static bool reply(google::protobuf::RpcController *controller, CFdbProtoMessage &response)
+    {
+        CFdbProtoMsgBuilder builder(response);
+        return ((CFdbSvcController *)controller)->getMsg()->reply(
+                        ((CFdbSvcController *)controller)->getMsgRef(), builder);
     }
 private:
     CFdbMessage *mMsg;

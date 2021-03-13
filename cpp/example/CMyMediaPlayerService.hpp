@@ -43,7 +43,7 @@ public:
         resp.set_hour(5);
         resp.set_minute(23);
         resp.set_second(26);
-        PROTOBUS_REPLY(controller, resp);
+        CFdbSvcController::reply(controller, resp);
     }
     void CallSearchMetaData(::google::protobuf::RpcController* controller,
                          const ::google::protobuf::Empty* request,
@@ -55,7 +55,7 @@ public:
          resp.set_hour(6);
          resp.set_minute(42);
          resp.set_second(35);
-         PROTOBUS_REPLY(controller, resp);
+         CFdbSvcController::reply(controller, resp);
     }
     void EmitElapseTime(::google::protobuf::RpcController* controller,
                          const ::FDBPB_EXAMPLE::ElapseTime* request,

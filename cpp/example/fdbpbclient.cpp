@@ -17,7 +17,7 @@
 #include <iostream>
 #define FDB_LOG_TAG "FDB_PB_TEST"
 #include <common_base/fdbus.h>
-#include <protobus/CFdbPbComponent.h>
+#include <protobus/protobus.h>
 #include "CMyMediaPlayerService.hpp"
 
 static CMyMediaPlayerService g_fdb_pb_server;
@@ -25,29 +25,39 @@ static CBaseWorker g_fdb_media_player_worker;
 static CFdbPbComponent g_fdb_media_player_component("media player", &g_fdb_media_player_worker);
 static google::protobuf::RpcChannel *g_fdb_invoke_channel = 0;
 
-static void my_callback1(FDBPB_EXAMPLE::ElapseTime *response)
+static void my_callback(FDBPB_EXAMPLE::ElapseTime &response)
 {
     std::cout << "Async to CallNowPlayingInfo is received, "
-              << response->hour() << ", "
-              << response->minute() << ", "
-              << response->second() << std::endl;
-    delete response;
+              << response.hour() << ", "
+              << response.minute() << ", "
+              << response.second() << std::endl;
 }
 
-static void my_callback2(FDBPB_EXAMPLE::ElapseTime *response)
+class CMyCallback
 {
-    std::cout << "Async reply to CallSearchMetaData is received, "
-              << response->hour() << ", "
-              << response->minute() << ", "
-              << response->second() << std::endl;
-    delete response;
-}
+public:
+    CMyCallback(const char *data)
+        : mData(data)
+    {
+    }
+    void handleMsg(FDBPB_EXAMPLE::ElapseTime &response)
+    {
+        std::cout << "Async reply to CallSearchMetaData is received, "
+                  << "data: " << mData << ", "
+                  << response.hour() << ", "
+                  << response.minute() << ", "
+                  << response.second() << std::endl;
+    }
+private:
+    std::string mData;
+};
 
 class CInvokeTimer : public CBaseLoopTimer
 {
 public:
     CInvokeTimer()
         : CBaseLoopTimer(500, true)
+        , mCallback("hello, world")
     {}
 protected:
     void run()
@@ -61,16 +71,16 @@ protected:
             request.set_file_name("~home/jeremy/music/song.mp3");
             request.set_folder_name("~/home/jeremy");
             request.set_elapse_time(126);
-            auto response = new FDBPB_EXAMPLE::ElapseTime();
             FDBPB_EXAMPLE::MediaPlayerService::Stub server(g_fdb_invoke_channel);
             // done != 0: async call
-            server.CallNowPlayingInfo(0, &request, response, google::protobuf::NewCallback(my_callback1, response));
+            server.CallNowPlayingInfo(0, &request, PBS_INVOKE_ASYNC,
+                                      newPbsFunction<FDBPB_EXAMPLE::ElapseTime>(my_callback));
         }
         {
-            auto response = new FDBPB_EXAMPLE::ElapseTime();
             FDBPB_EXAMPLE::MediaPlayerService::Stub server(g_fdb_invoke_channel);
             // done != 0: async call
-            server.CallSearchMetaData(0, 0, response, google::protobuf::NewCallback(my_callback2, response));
+            server.CallSearchMetaData(0, 0, PBS_INVOKE_ASYNC,
+                      newPbsMethod<CMyCallback, FDBPB_EXAMPLE::ElapseTime>(&mCallback, &CMyCallback::handleMsg));
         }
         {
             FDBPB_EXAMPLE::NowPlayingDetails request;
@@ -94,41 +104,25 @@ protected:
             ::FDBPB_EXAMPLE::SongId request;
             request.set_id(123456);
             FDBPB_EXAMPLE::MediaPlayerService::Stub server(g_fdb_invoke_channel);
-            // done == 0 && response == 0: async call without reply (send)
-            server.CallNextSong(0, &request, 0, 0);
+            // done == 0 && response == PBS_INVOKE_ASYNC: async call without reply (send)
+            server.CallNextSong(0, &request, PBS_INVOKE_ASYNC, 0);
         }
         {
             ::FDBPB_EXAMPLE::SongId request;
             request.set_id(123456);
-            ::google::protobuf::Empty response;
             FDBPB_EXAMPLE::MediaPlayerService::Stub server(g_fdb_invoke_channel);
-            // done == 0 && response == Empty: sync call without reply
-            server.CallNextSong(0, &request, &response, 0);
+            // done == 0 && response == PBS_INVOKE_SYNC: sync call without reply
+            server.CallNextSong(0, &request, PBS_INVOKE_SYNC, 0);
         }
     }
+private:
+    CMyCallback mCallback;
 };
 
 CInvokeTimer g_fdb_invoke_timer;
 
 int main(int argc, char **argv)
 {
-#ifdef __WIN32__
-    WORD wVersionRequested;
-    WSADATA wsaData;
-    int err;
-
-    /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
-    wVersionRequested = MAKEWORD(2, 2);
-
-    err = WSAStartup(wVersionRequested, &wsaData);
-    if (err != 0)
-    {
-        /* Tell the user that we could not find a usable */
-        /* Winsock DLL.                                  */
-        printf("WSAStartup failed with error: %d\n", err);
-        return 1;
-    }
-#endif
     if (argc != 2)
     {
         std::cout << "Usage: fdbpbserver server_name" << std::endl;

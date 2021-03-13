@@ -22,6 +22,7 @@
 #include <common_base/CBaseEndpoint.h>
 #include <protobus/CFdbPbComponent.h>
 #include <protobus/CFdbRpcController.h>
+#include <protobus/CFdbPbResponse.h>
 
 static void fdb_decode_status(CFdbMessage *msg, google::protobuf::RpcController *controller)
 {
@@ -32,7 +33,7 @@ static void fdb_decode_status(CFdbMessage *msg, google::protobuf::RpcController 
     {
         if (controller)
         {
-            controller->SetFailed("onReply: fail to decode status!");
+            controller->SetFailed("fail to decode status!");
         }
         return;
     }
@@ -42,25 +43,30 @@ static void fdb_decode_status(CFdbMessage *msg, google::protobuf::RpcController 
     }
 }
 
-static void fdb_call_done(CFdbMessage *msg, google::protobuf::Message* response, google::protobuf::Closure* done,
+static void fdb_call_done(CFdbMessage *msg, google::protobuf::Message* response,
                           google::protobuf::RpcController *controller)
 {
-    if (response)
+    if (msg->isStatus())
     {
-        if (msg->isStatus())
-        {
-            fdb_decode_status(msg, controller);
-            return;
-        }
+        fdb_decode_status(msg, controller);
+    }
+    else
+    {
         CFdbProtoMsgParser parser(*response);
-        if (!msg->deserialize(parser))
+        if (!msg->deserialize(parser) && controller)
         {
-            FDB_LOG_E("CFdbPbChannel: unable to deode message!\n");
-            return;
+            controller->SetFailed("fail to decode message!");
         }
     }
+}
+
+static void fdb_call_done(CFdbMessage *msg, google::protobuf::Closure* done,
+                          google::protobuf::RpcController *controller)
+{
     if (done)
     {
+        auto pb_done = fdb_dynamic_cast_if_available<CPbClosure *>(done);
+        fdb_call_done(msg, &(pb_done->getResponse()), controller);
         done->Run();
     }
 }
@@ -109,52 +115,32 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
             qos = fdb_ctrl->qos();
         }
 
-        if (done)
-        {   //async call
-            if (request)
-            {
-                CFdbProtoMsgBuilder builder(*request);
-                mComponent->invoke(mEndpoint, code, builder,
-                    [done, response](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
-                    {
-                        fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, 0);
-                    },
-                    timeout);
-            }
-            else
-            {
-                mComponent->invoke(mEndpoint, code,
-                [done, response](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
-                {
-                    fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), response, done, 0);
-                },
-                (const void *)0, 0, timeout);
-            }
-        }
-        else
-        {   // sync call or send
-            if (response)
-            {   // sync
-                auto msg = new CFdbMessage(code);
-                CBaseJob::Ptr ref(msg);
+        if (response == (google::protobuf::Message *)PBS_INVOKE_ASYNC)
+        {
+            if (done)
+            {   // async with reply
                 if (request)
                 {
                     CFdbProtoMsgBuilder builder(*request);
-                    mEndpoint->invoke(ref, builder, timeout);
+                    mComponent->invoke(mEndpoint, code, builder,
+                        [done](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
+                        {
+                            fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), done, 0);
+                        },
+                        timeout);
                 }
                 else
                 {
-                    mEndpoint->invoke(ref, 0, 0, timeout);
+                    mComponent->invoke(mEndpoint, code,
+                    [done](CBaseJob::Ptr &msg_ref, CFdbBaseObject *obj)
+                    {
+                        fdb_call_done(castToMessage<CFdbMessage *>(msg_ref), done, 0);
+                    },
+                    (const void *)0, 0, timeout);
                 }
-                if (msg->isStatus())
-                {
-                    fdb_decode_status(msg, controller);
-                    return;
-                }
-                fdb_call_done(msg, response, done, controller);
             }
             else
-            {   // send
+            {   // async without reply (send)
                 if (request)
                 {
                     CFdbProtoMsgBuilder builder(*request);
@@ -164,6 +150,29 @@ void CFdbPbChannel::CallMethod(const google::protobuf::MethodDescriptor *method,
                 {
                     mEndpoint->send(code, (const void *)0, 0, qos);
                 }
+            }
+        }
+        else
+        {   // sync call
+            auto msg = new CFdbMessage(code);
+            CBaseJob::Ptr ref(msg);
+            if (request)
+            {
+                CFdbProtoMsgBuilder builder(*request);
+                mEndpoint->invoke(ref, builder, timeout);
+            }
+            else
+            {
+                mEndpoint->invoke(ref, 0, 0, timeout);
+            }
+            if (msg->isStatus())
+            {
+                fdb_decode_status(msg, controller);
+                return;
+            }
+            if (response != (google::protobuf::Message *)PBS_INVOKE_SYNC)
+            {
+                fdb_call_done(msg, response, controller);
             }
         }
     }

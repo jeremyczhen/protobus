@@ -17,7 +17,7 @@
 #include <iostream>
 #define FDB_LOG_TAG "FDB_PB_TEST"
 #include <common_base/fdbus.h>
-#include <protobus/CFdbPbComponent.h>
+#include <protobus/protobus.h>
 #include "CMyMediaPlayerService.hpp"
 
 static CMyMediaPlayerService g_fdb_pb_server;
@@ -47,23 +47,6 @@ CBroadcastTimer g_fdb_broadcast_timer;
 
 int main(int argc, char **argv)
 {
-#ifdef __WIN32__
-    WORD wVersionRequested;
-    WSADATA wsaData;
-    int err;
-
-    /* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
-    wVersionRequested = MAKEWORD(2, 2);
-
-    err = WSAStartup(wVersionRequested, &wsaData);
-    if (err != 0)
-    {
-        /* Tell the user that we could not find a usable */
-        /* Winsock DLL.                                  */
-        printf("WSAStartup failed with error: %d\n", err);
-        return 1;
-    }
-#endif
     if (argc != 2)
     {
         std::cout << "Usage: fdbpbserver server_name" << std::endl;
