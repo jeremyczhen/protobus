@@ -1,1 +1,2 @@
-Protobus - Google Protocol Buffers + FDBus
+由于github网速太慢，FDBus迁移到gitee上，github已经不再维护。请访问 https://gitee.com/jeremyczhen/fdbus 获得FDBus最新版本，谢谢！
+==================================================================================================================================
